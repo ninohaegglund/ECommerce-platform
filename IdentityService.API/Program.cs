@@ -1,4 +1,8 @@
 using IdentityService.API.Data;
+using IdentityService.API.Interfaces;
+using IdentityService.API.JWT;
+using IdentityService.API.Repositories;
+using IdentityService.API.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +14,9 @@ builder.Services.AddDbContext<IdentityDbContext>(options =>
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 var app = builder.Build();
 

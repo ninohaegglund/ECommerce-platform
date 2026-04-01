@@ -1,6 +1,5 @@
-﻿namespace IdentityService.API.JWT
+﻿namespace IdentityService.API.JWT;
+
+public class JwtExtensions
 {
-    public class JwtExtensions
-    {
-    }
 }

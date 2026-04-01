@@ -1,6 +1,11 @@
-﻿namespace IdentityService.API.JWT
+﻿using IdentityService.API.Models;
+
+namespace IdentityService.API.JWT;
+
+public class JwtTokenGenerator : IJwtTokenGenerator
 {
-    public class JwtTokenGenerator
+    string IJwtTokenGenerator.GenerateToken(User user, IList<string> roles)
     {
+        throw new NotImplementedException();
     }
 }
