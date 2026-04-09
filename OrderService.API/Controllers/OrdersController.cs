@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using OrderService.Api.DTOs;
 using OrderService.Api.Interfaces;
 
@@ -29,22 +31,29 @@ public class OrdersController : ControllerBase
         return order is null ? NotFound() : Ok(order);
     }
 
-    [HttpGet("customer/{customerId:guid}")]
-    public async Task<IActionResult> GetByCustomer(Guid customerId, CancellationToken cancellationToken)
+    [HttpGet("user/{userId:guid}")]
+    public async Task<IActionResult> GetByUser(Guid userId, CancellationToken cancellationToken)
     {
-        var orders = await _orderService.GetByCustomerIdAsync(customerId, cancellationToken);
+        var orders = await _orderService.GetByUserIdAsync(userId, cancellationToken);
         return Ok(orders);
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateOrderRequestDto request, CancellationToken cancellationToken)
     {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("A valid authenticated user account is required to create an order.");
+        }
+
         if (request.Items.Count == 0)
         {
             return BadRequest("Order must contain at least one item.");
         }
 
-        var created = await _orderService.CreateAsync(request, cancellationToken);
+        var created = await _orderService.CreateAsync(userId, request, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 

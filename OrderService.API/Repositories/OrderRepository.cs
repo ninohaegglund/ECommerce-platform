@@ -30,11 +30,11 @@ public class OrderRepository : IOrderRepository
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Order>> GetByCustomerIdAsync(Guid customerId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Order>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         return await _dbContext.Orders
             .Include(x => x.Items)
-            .Where(x => x.CustomerId == customerId)
+            .Where(x => x.UserId == userId)
             .AsNoTracking()
             .OrderByDescending(x => x.CreatedAtUtc)
             .ToListAsync(cancellationToken);

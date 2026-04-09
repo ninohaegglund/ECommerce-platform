@@ -6,7 +6,6 @@ namespace OrderService.Api.DTOs;
 
 public class CreateOrderRequestDto
 {
-    public Guid CustomerId { get; set; }
     public string Currency { get; set; } = "SEK";
 
     public CreateAddressDto ShippingAddress { get; set; } = new();

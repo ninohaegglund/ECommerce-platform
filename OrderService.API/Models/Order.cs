@@ -6,7 +6,7 @@ namespace OrderService.Api.Models;
 public class Order
 {
     public Guid Id { get; set; } = Guid.NewGuid();
-    public Guid CustomerId { get; set; }
+    public Guid UserId { get; set; }
 
     public string OrderNumber { get; set; } = string.Empty;
     public OrderStatus Status { get; set; } = OrderStatus.Pending;

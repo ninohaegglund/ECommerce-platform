@@ -19,10 +19,10 @@ public class OrderService : IOrderService
     public Task<Order?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => _orderRepository.GetByIdAsync(id, cancellationToken);
 
-    public Task<IReadOnlyList<Order>> GetByCustomerIdAsync(Guid customerId, CancellationToken cancellationToken = default)
-        => _orderRepository.GetByCustomerIdAsync(customerId, cancellationToken);
+    public Task<IReadOnlyList<Order>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
+        => _orderRepository.GetByUserIdAsync(userId, cancellationToken);
 
-    public async Task<Order> CreateAsync(CreateOrderRequestDto request, CancellationToken cancellationToken = default)
+    public async Task<Order> CreateAsync(Guid userId, CreateOrderRequestDto request, CancellationToken cancellationToken = default)
     {
         var items = request.Items.Select(x =>
         {
@@ -47,7 +47,7 @@ public class OrderService : IOrderService
 
         var order = new Order
         {
-            CustomerId = request.CustomerId,
+            UserId = userId,
             OrderNumber = $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Random.Shared.Next(1000, 9999)}",
             Status = OrderStatus.Pending,
             Currency = request.Currency,
