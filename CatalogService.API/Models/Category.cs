@@ -1,0 +1,24 @@
+using System;
+using System.Collections.Generic;
+
+namespace CatalogService.Api.Models;
+
+public class Category
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+
+    public string Name { get; set; } = string.Empty;
+    public string Slug { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+
+    public bool IsActive { get; set; } = true;
+
+    public Guid? ParentCategoryId { get; set; }
+    public Category? ParentCategory { get; set; }
+    public List<Category> Children { get; set; } = [];
+
+    public List<Product> Products { get; set; } = [];
+
+    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAtUtc { get; set; }
+}
