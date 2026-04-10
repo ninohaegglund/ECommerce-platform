@@ -362,3 +362,11 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /IdentityService.API/Migrations
+/OrderService.API/Migrations/20260409134017_test.cs
+/OrderService.API/Migrations/20260409134017_test.Designer.cs
+/OrderService.API/Migrations/20260409145247_test.cs
+/OrderService.API/Migrations/OrderDbContextModelSnapshot.cs
+/OrderService.API/Migrations/20260409145247_test.Designer.cs
+/OrderService.API/Migrations/OrderDbContextModelSnapshot.cs
+/OrderService.API/Migrations/20260409134017_test.Designer.cs
+/OrderService.API/Migrations/20260409134017_test.cs
