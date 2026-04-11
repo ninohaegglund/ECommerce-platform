@@ -1,8 +1,6 @@
-﻿using System;
-
 namespace OrderService.Api.DTOs;
 
-public class CreateOrderItemDto
+public class AddCartItemDto
 {
     public Guid ProductId { get; set; }
     public string ProductName { get; set; } = string.Empty;
@@ -10,5 +8,6 @@ public class CreateOrderItemDto
 
     public int Quantity { get; set; }
     public decimal UnitPrice { get; set; }
-    public decimal DiscountAmount { get; set; }
+
+    public string Currency { get; set; } = "SEK";
 }
