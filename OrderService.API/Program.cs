@@ -58,7 +58,9 @@ builder.Services.AddDbContext<OrderDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<IOrderService, OrderServiceImplementation>();
+builder.Services.AddScoped<ICartService, CartService>();
 
 var app = builder.Build();
 

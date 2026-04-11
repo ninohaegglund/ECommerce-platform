@@ -25,7 +25,9 @@ public class Order
     public Address ShippingAddress { get; set; } = new();
     public Address BillingAddress { get; set; } = new();
 
-    public Payment Payment { get; set; } = new();
+    public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.NotPaid;
+    public string? PaymentTransactionId { get; set; }
+    public string? PaymentProvider { get; set; }
 
     public List<OrderItem> Items { get; set; } = [];
 }
