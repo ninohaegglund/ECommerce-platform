@@ -86,4 +86,4 @@ public class CategoriesController : ControllerBase
             UpdatedAtUtc = category.UpdatedAtUtc
         };
     }
-}   
+}
