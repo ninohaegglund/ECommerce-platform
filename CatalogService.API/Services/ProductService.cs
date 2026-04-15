@@ -6,10 +6,12 @@ namespace CatalogService.Api.Services;
 public class ProductService : IProductService
 {
     private readonly IProductRepository _productRepository;
+    private readonly ICategoryRepository _categoryRepository;
 
-    public ProductService(IProductRepository productRepository)
+    public ProductService(IProductRepository productRepository, ICategoryRepository categoryRepository)
     {
         _productRepository = productRepository;
+        _categoryRepository = categoryRepository;
     }
 
     public Task<IReadOnlyList<Product>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -21,8 +23,14 @@ public class ProductService : IProductService
     public Task<IReadOnlyList<Product>> GetByCategoryIdAsync(Guid categoryId, CancellationToken cancellationToken = default)
         => _productRepository.GetByCategoryIdAsync(categoryId, cancellationToken);
 
-    public Task<Product> CreateAsync(Product product, CancellationToken cancellationToken = default)
+    public async Task<Product?> CreateAsync(Product product, CancellationToken cancellationToken = default)
     {
+        var category = await _categoryRepository.GetByIdAsync(product.CategoryId, cancellationToken);
+        if (category is null)
+        {
+            return null;
+        }
+
         product.CreatedAtUtc = DateTime.UtcNow;
         product.UpdatedAtUtc = null;
 
@@ -31,7 +39,7 @@ public class ProductService : IProductService
             image.ProductId = product.Id;
         }
 
-        return _productRepository.AddAsync(product, cancellationToken);
+        return await _productRepository.AddAsync(product, cancellationToken);
     }
 
     public async Task<Product?> UpdateAsync(Product product, CancellationToken cancellationToken = default)

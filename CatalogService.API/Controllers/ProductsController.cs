@@ -42,6 +42,11 @@ public class ProductsController : ControllerBase
     {
         var product = MapFromCreateRequest(request);
         var created = await _productService.CreateAsync(product, cancellationToken);
+        if (created is null)
+        {
+            return BadRequest($"Category '{request.CategoryId}' does not exist.");
+        }
+
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, MapToResponse(created));
     }
 
