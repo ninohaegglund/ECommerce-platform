@@ -43,6 +43,11 @@ public class CategoriesController : ControllerBase
         };
 
         var created = await _categoryService.CreateAsync(category, cancellationToken);
+        if (created is null)
+        {
+            return BadRequest($"Parent category '{request.ParentCategoryId}' does not exist.");
+        }
+
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, MapToResponse(created));
     }
 

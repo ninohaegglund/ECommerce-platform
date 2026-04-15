@@ -18,11 +18,20 @@ public class CategoryService : ICategoryService
     public Task<Category?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => _categoryRepository.GetByIdAsync(id, cancellationToken);
 
-    public Task<Category> CreateAsync(Category category, CancellationToken cancellationToken = default)
+    public async Task<Category?> CreateAsync(Category category, CancellationToken cancellationToken = default)
     {
+        if (category.ParentCategoryId.HasValue)
+        {
+            var parent = await _categoryRepository.GetByIdAsync(category.ParentCategoryId.Value, cancellationToken);
+            if (parent is null)
+            {
+                return null;
+            }
+        }
+
         category.CreatedAtUtc = DateTime.UtcNow;
         category.UpdatedAtUtc = null;
-        return _categoryRepository.AddAsync(category, cancellationToken);
+        return await _categoryRepository.AddAsync(category, cancellationToken);
     }
 
     public async Task<Category?> UpdateAsync(Category category, CancellationToken cancellationToken = default)
