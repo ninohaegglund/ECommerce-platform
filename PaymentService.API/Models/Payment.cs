@@ -1,22 +1,5 @@
 namespace PaymentService.Api.Models;
 
-public enum PaymentStatus
-{
-    Pending = 0,
-    Captured = 1,
-    Failed = 2,
-    Cancelled = 3,
-    Refunded = 4
-}
-
-public enum PaymentMethod
-{
-    Card = 0,
-    Swish = 1,
-    Klarna = 2,
-    PayPal = 3
-}
-
 public class Payment
 {
     public Guid Id { get; set; } = Guid.NewGuid();
