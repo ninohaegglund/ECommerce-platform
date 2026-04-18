@@ -9,12 +9,9 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<PaymentDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-var app = builder.Build();
+builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 
-if (app.Environment.IsDevelopment())
-{
-   
-}
+var app = builder.Build();
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
