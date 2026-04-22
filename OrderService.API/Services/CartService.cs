@@ -1,6 +1,8 @@
 using OrderService.Api.DTOs;
 using OrderService.Api.Interfaces;
 using OrderService.Api.Models;
+using OrderService.API.DTOs;
+using System.Net.Http.Json;
 
 namespace OrderService.Api.Services;
 
@@ -8,11 +10,13 @@ public class CartService : ICartService
 {
     private readonly ICartRepository _cartRepository;
     private readonly IOrderRepository _orderRepository;
+    private readonly IHttpClientFactory _httpClientFactory;
 
-    public CartService(ICartRepository cartRepository, IOrderRepository orderRepository)
+    public CartService(ICartRepository cartRepository, IOrderRepository orderRepository, IHttpClientFactory httpClientFactory)
     {
         _cartRepository = cartRepository;
         _orderRepository = orderRepository;
+        _httpClientFactory = httpClientFactory;
     }
 
     public async Task<CartResponseDto> GetCartAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -53,14 +57,24 @@ public class CartService : ICartService
 
         if (existing is null)
         {
+            var client = _httpClientFactory.CreateClient("CatalogClient");
+            var response = await client.GetAsync($"/api/Products/{request.ProductId}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception("Product not found in Catalog");
+            }
+
+            var catalogProduct = await response.Content.ReadFromJsonAsync<CatalogProductDto>();
+
             var newItem = new CartItem
             {
                 CartId = cart.Id,
-                ProductId = request.ProductId,
-                ProductName = request.ProductName,
-                Sku = request.Sku,
-                Quantity = request.Quantity,
-                UnitPrice = request.UnitPrice
+                ProductId = catalogProduct.Id,
+                ProductName = catalogProduct.Name, // Snapshot from Catalog
+                Sku = catalogProduct.Sku,          // Snapshot from Catalog
+                UnitPrice = catalogProduct.Price,  // Snapshot from Catalog
+                Quantity = request.Quantity
             };
 
             await _cartRepository.AddItemAsync(newItem, cancellationToken);
@@ -70,10 +84,20 @@ public class CartService : ICartService
         }
         else
         {
+            var client = _httpClientFactory.CreateClient("CatalogClient");
+            var response = await client.GetAsync($"/api/Products/{request.ProductId}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception("Product not found in Catalog");
+            }
+
+            var catalogProduct = await response.Content.ReadFromJsonAsync<CatalogProductDto>();
+
             existing.Quantity += request.Quantity;
-            existing.ProductName = request.ProductName;
-            existing.Sku = request.Sku;
-            existing.UnitPrice = request.UnitPrice;
+            existing.ProductName = catalogProduct.Name;
+            existing.Sku = catalogProduct.Sku;
+            existing.UnitPrice = catalogProduct.Price;
             cart.UpdatedAtUtc = DateTime.UtcNow;
 
             await _cartRepository.SaveChangesAsync(cancellationToken);
