@@ -370,3 +370,8 @@ FodyWeavers.xsd
 /OrderService.API/Migrations/OrderDbContextModelSnapshot.cs
 /OrderService.API/Migrations/20260409134017_test.Designer.cs
 /OrderService.API/Migrations/20260409134017_test.cs
+/CatalogService.API/Migrations/20260413180104_InitialCreate.cs
+/CatalogService.API/Migrations/20260413180104_InitialCreate.Designer.cs
+*.cs
+/CatalogService.API/Migrations/20260413180104_InitialCreate.cs
+/CatalogService.API/Migrations/20260413180104_InitialCreate.Designer.cs
