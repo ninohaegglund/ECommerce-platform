@@ -72,6 +72,11 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<IOrderService, OrderServiceImplementation>();
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddHttpClient("CatalogClient", client =>
+{
+    // Replace with the actual URL/Port of your running CatalogService.API
+    client.BaseAddress = new Uri("https://localhost:7019/"); 
+});
 
 var app = builder.Build();
 
