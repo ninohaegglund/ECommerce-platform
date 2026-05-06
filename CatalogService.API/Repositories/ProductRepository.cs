@@ -54,6 +54,13 @@ public class ProductRepository : IProductRepository
         return product;
     }
 
+    public async Task<ProductImage> AddImageAsync(ProductImage image, CancellationToken cancellationToken = default)
+    {
+        _dbContext.ProductImages.Add(image);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return image;
+    }
+
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var existing = await _dbContext.Products.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);

@@ -23,9 +23,9 @@
   <ItemGroup>
     <Folder Include="Data\" />
     <Folder Include="Interfaces\" />
-    <Folder Include="DTOs\" />
     <Folder Include="Models\" />
     <Folder Include="NewFolder\" />
+    <Folder Include="Uploads\Products\" />
   </ItemGroup>
 
 </Project>
