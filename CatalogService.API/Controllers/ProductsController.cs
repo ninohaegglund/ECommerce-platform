@@ -30,6 +30,24 @@ public class ProductsController : ControllerBase
         return product is null ? NotFound() : Ok(MapToResponse(product));
     }
 
+    [HttpGet("{id:guid}/images")]
+    public async Task<IActionResult> GetImages(Guid id, CancellationToken cancellationToken)
+    {
+        var product = await _productService.GetByIdAsync(id, cancellationToken);
+        return product is null
+            ? NotFound()
+            : Ok(product.Images
+                .OrderBy(x => x.SortOrder)
+                .Select(x => new ProductImageResponseDto
+                {
+                    Id = x.Id,
+                    ImageUrl = x.ImageUrl,
+                    AltText = x.AltText,
+                    SortOrder = x.SortOrder,
+                    IsPrimary = x.IsPrimary
+                }));
+    }
+
     [HttpGet("category/{categoryId:guid}")]
     public async Task<IActionResult> GetByCategory(Guid categoryId, CancellationToken cancellationToken)
     {
@@ -56,6 +74,37 @@ public class ProductsController : ControllerBase
         var product = MapFromUpdateRequest(id, request);
         var updated = await _productService.UpdateAsync(product, cancellationToken);
         return updated is null ? NotFound() : Ok(MapToResponse(updated));
+    }
+
+    [HttpPost("{id:guid}/images")]
+    public async Task<IActionResult> UploadImage(
+        Guid id,
+        [FromForm] ProductImageUploadRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var image = await _productService.AddImageAsync(
+            id,
+            request.Image,
+            request.AltText,
+            request.SortOrder,
+            request.IsPrimary,
+            cancellationToken);
+
+        if (image is null)
+        {
+            return NotFound();
+        }
+
+        var response = new ProductImageResponseDto
+        {
+            Id = image.Id,
+            ImageUrl = image.ImageUrl,
+            AltText = image.AltText,
+            SortOrder = image.SortOrder,
+            IsPrimary = image.IsPrimary
+        };
+
+        return Ok(response);
     }
 
     [HttpDelete("{id:guid}")]

@@ -4,6 +4,7 @@ using CatalogService.Api.Interfaces;
 using CatalogService.Api.Repositories;
 using CatalogService.Api.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +52,19 @@ using (var scope = app.Services.CreateScope())
 
 app.UseHttpsRedirection();
 app.UseCors("FrontendPolicy");
+
+var configuredPath = app.Configuration.GetValue<string>("ProductImages:UploadPath");
+var uploadRoot = string.IsNullOrWhiteSpace(configuredPath)
+    ? Path.Combine(app.Environment.ContentRootPath, "Uploads", "Products")
+    : configuredPath;
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadRoot),
+    RequestPath = "/uploads/products"
+});
+
+app.UseStaticFiles();
 app.UseAuthorization();
 app.MapControllers();
 

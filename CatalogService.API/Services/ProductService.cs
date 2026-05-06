@@ -1,5 +1,6 @@
 using CatalogService.Api.Interfaces;
 using CatalogService.Api.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace CatalogService.Api.Services;
 
@@ -7,11 +8,19 @@ public class ProductService : IProductService
 {
     private readonly IProductRepository _productRepository;
     private readonly ICategoryRepository _categoryRepository;
+    private readonly IWebHostEnvironment _environment;
+    private readonly IConfiguration _configuration;
 
-    public ProductService(IProductRepository productRepository, ICategoryRepository categoryRepository)
+    public ProductService(
+        IProductRepository productRepository,
+        ICategoryRepository categoryRepository,
+        IWebHostEnvironment environment,
+        IConfiguration configuration)
     {
         _productRepository = productRepository;
         _categoryRepository = categoryRepository;
+        _environment = environment;
+        _configuration = configuration;
     }
 
     public Task<IReadOnlyList<Product>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -79,6 +88,50 @@ public class ProductService : IProductService
         }
 
         return await _productRepository.UpdateAsync(existing, cancellationToken);
+    }
+
+    public async Task<ProductImage?> AddImageAsync(
+        Guid productId,
+        IFormFile image,
+        string altText,
+        int sortOrder,
+        bool isPrimary,
+        CancellationToken cancellationToken = default)
+    {
+        var product = await _productRepository.GetByIdAsync(productId, cancellationToken);
+        if (product is null)
+        {
+            return null;
+        }
+
+        var configuredPath = _configuration.GetValue<string>("ProductImages:UploadPath");
+        var uploadRoot = string.IsNullOrWhiteSpace(configuredPath)
+            ? Path.Combine(_environment.ContentRootPath, "Uploads", "Products")
+            : configuredPath;
+        Directory.CreateDirectory(uploadRoot);
+
+        var fileName = $"{Guid.NewGuid()}{Path.GetExtension(image.FileName)}";
+        var filePath = Path.Combine(uploadRoot, fileName);
+
+        await using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await image.CopyToAsync(stream, cancellationToken);
+        }
+
+        var baseUrl = _configuration.GetValue<string>("ProductImages:PublicBaseUrl")?.TrimEnd('/');
+        var relativePath = $"uploads/products/{fileName}";
+        var imageUrl = string.IsNullOrWhiteSpace(baseUrl) ? $"/{relativePath}" : $"{baseUrl}/{relativePath}";
+
+        var productImage = new ProductImage
+        {
+            ProductId = product.Id,
+            ImageUrl = imageUrl,
+            AltText = altText,
+            SortOrder = sortOrder,
+            IsPrimary = isPrimary
+        };
+
+        return await _productRepository.AddImageAsync(productImage, cancellationToken);
     }
 
     public Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
