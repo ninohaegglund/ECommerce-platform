@@ -18,3 +18,11 @@ public class PaymentResponseDto
     public DateTime? ProcessedAtUtc { get; set; }
     public DateTime? UpdatedAtUtc { get; set; }
 }
+
+public class StripePaymentIntentResponseDto
+{
+    public Guid PaymentId { get; set; }
+    public string PaymentIntentId { get; set; } = string.Empty;
+    public string ClientSecret { get; set; } = string.Empty;
+    public PaymentStatus Status { get; set; }
+}

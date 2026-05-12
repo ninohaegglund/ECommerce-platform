@@ -1,16 +1,28 @@
 using PaymentService.Api.DTOs;
 using PaymentService.Api.Interfaces;
 using PaymentService.Api.Models;
+using Microsoft.Extensions.Configuration;
+using Stripe;
+using PaymentMethodModel = PaymentService.Api.Models.PaymentMethod;
 
 namespace PaymentService.Api.Services;
 
 public class PaymentService : IPaymentService
 {
-    private readonly IPaymentRepository _paymentRepository;
+    private const string StripeProvider = "Stripe";
 
-    public PaymentService(IPaymentRepository paymentRepository)
+    private static readonly HashSet<string> ZeroDecimalCurrencies = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "bif", "clp", "djf", "gnf", "jpy", "kmf", "krw", "mga", "pyg", "rwf", "ugx", "vnd", "vuv", "xaf", "xof", "xpf"
+    };
+
+    private readonly IPaymentRepository _paymentRepository;
+    private readonly IConfiguration _configuration;
+
+    public PaymentService(IPaymentRepository paymentRepository, IConfiguration configuration)
     {
         _paymentRepository = paymentRepository;
+        _configuration = configuration;
     }
 
     public Task<Payment?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -48,5 +60,147 @@ public class PaymentService : IPaymentService
         payment.UpdatedAtUtc = DateTime.UtcNow;
 
         return await _paymentRepository.UpdateAsync(payment, cancellationToken);
+    }
+
+    public async Task<StripePaymentIntentResponseDto?> CreateStripePaymentIntentAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var payment = await _paymentRepository.GetByIdAsync(id, cancellationToken);
+        if (payment is null)
+        {
+            return null;
+        }
+
+        if (payment.Method != PaymentMethodModel.Card)
+        {
+            throw new InvalidOperationException("Stripe payments currently support card payments only.");
+        }
+
+        if (payment.Status is PaymentStatus.Captured or PaymentStatus.Failed or PaymentStatus.Cancelled)
+        {
+            throw new InvalidOperationException("Payment is already finalized.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(payment.Provider) &&
+            !string.Equals(payment.Provider, StripeProvider, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException($"Payment provider is already set to {payment.Provider}.");
+        }
+
+        var paymentIntentService = new PaymentIntentService(CreateStripeClient());
+        PaymentIntent paymentIntent;
+
+        if (!string.IsNullOrWhiteSpace(payment.TransactionId))
+        {
+            paymentIntent = await paymentIntentService.GetAsync(payment.TransactionId, cancellationToken: cancellationToken);
+        }
+        else
+        {
+            var createOptions = new PaymentIntentCreateOptions
+            {
+                Amount = ToStripeAmount(payment.Amount, payment.Currency),
+                Currency = NormalizeCurrency(payment.Currency),
+                PaymentMethodTypes = new List<string> { "card" },
+                Description = $"Order {payment.OrderId}",
+                Metadata = new Dictionary<string, string>
+                {
+                    ["paymentId"] = payment.Id.ToString(),
+                    ["orderId"] = payment.OrderId.ToString(),
+                    ["userId"] = payment.UserId.ToString()
+                }
+            };
+
+            var requestOptions = new RequestOptions
+            {
+                IdempotencyKey = $"payment-intent-{payment.Id}"
+            };
+
+            paymentIntent = await paymentIntentService.CreateAsync(createOptions, requestOptions, cancellationToken);
+        }
+
+        if (string.IsNullOrWhiteSpace(paymentIntent.ClientSecret))
+        {
+            throw new InvalidOperationException("Stripe did not return a client secret for the payment intent.");
+        }
+
+        payment.Provider = StripeProvider;
+        payment.TransactionId = paymentIntent.Id;
+        payment.Status = PaymentStatus.Pending;
+        payment.FailureReason = null;
+        payment.UpdatedAtUtc = DateTime.UtcNow;
+
+        await _paymentRepository.UpdateAsync(payment, cancellationToken);
+
+        return new StripePaymentIntentResponseDto
+        {
+            PaymentId = payment.Id,
+            PaymentIntentId = paymentIntent.Id,
+            ClientSecret = paymentIntent.ClientSecret,
+            Status = payment.Status
+        };
+    }
+
+    public async Task<Payment?> ApplyStripePaymentIntentStatusAsync(
+        string paymentIntentId,
+        PaymentStatus status,
+        string? failureReason,
+        CancellationToken cancellationToken = default)
+    {
+        var payment = await _paymentRepository.GetByTransactionIdAsync(paymentIntentId, cancellationToken);
+        if (payment is null)
+        {
+            return null;
+        }
+
+        payment.Status = status;
+        payment.FailureReason = failureReason;
+        payment.UpdatedAtUtc = DateTime.UtcNow;
+
+        if (status is PaymentStatus.Captured or PaymentStatus.Failed or PaymentStatus.Cancelled)
+        {
+            payment.ProcessedAtUtc = DateTime.UtcNow;
+        }
+
+        return await _paymentRepository.UpdateAsync(payment, cancellationToken);
+    }
+
+    private StripeClient CreateStripeClient()
+    {
+        var secretKey = _configuration["Stripe:SecretKey"];
+        if (string.IsNullOrWhiteSpace(secretKey))
+        {
+            throw new InvalidOperationException("Stripe:SecretKey is not configured.");
+        }
+
+        return new StripeClient(secretKey);
+    }
+
+    private static long ToStripeAmount(decimal amount, string currency)
+    {
+        if (amount <= 0)
+        {
+            throw new InvalidOperationException("Amount must be greater than zero.");
+        }
+
+        var normalizedCurrency = NormalizeCurrency(currency);
+        var multiplier = ZeroDecimalCurrencies.Contains(normalizedCurrency) ? 1 : 100;
+        var amountInSmallestUnit = amount * multiplier;
+
+        if (amountInSmallestUnit != decimal.Truncate(amountInSmallestUnit))
+        {
+            throw new InvalidOperationException("Amount contains too many decimal places for the selected currency.");
+        }
+
+        return checked((long)amountInSmallestUnit);
+    }
+
+    private static string NormalizeCurrency(string currency)
+    {
+        var normalizedCurrency = currency.Trim().ToLowerInvariant();
+        if (normalizedCurrency.Length != 3)
+        {
+            throw new InvalidOperationException("Currency must be a three-letter ISO currency code.");
+        }
+
+        return normalizedCurrency;
     }
 }
