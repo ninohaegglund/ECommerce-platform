@@ -12,15 +12,18 @@ namespace IdentityService.API.Services
         private readonly IUserRepository _userRepository;
         private readonly IdentityDbContext _context;
         private readonly IJwtTokenGenerator _jwtTokenGenerator;
+        private readonly INotificationClient _notificationClient;
 
         public AuthService(
             IUserRepository userRepository,
             IdentityDbContext context,
-            IJwtTokenGenerator jwtTokenGenerator)
+            IJwtTokenGenerator jwtTokenGenerator,
+            INotificationClient notificationClient)
         {
             _userRepository = userRepository;
             _context = context;
             _jwtTokenGenerator = jwtTokenGenerator;
+            _notificationClient = notificationClient;
         }
 
         public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto request)
@@ -58,6 +61,13 @@ namespace IdentityService.API.Services
 
             await _userRepository.AddAsync(user);
             await _userRepository.SaveChangesAsync();
+
+            await _notificationClient.SendAccountCreatedAsync(
+                new AccountCreatedNotificationRequest(
+                    user.Id,
+                    user.Email,
+                    user.FirstName,
+                    user.LastName));
 
             var roles = user.UserRoles.Select(ur => ur.Role.Name).ToList();
             var token = _jwtTokenGenerator.GenerateToken(user, roles);
