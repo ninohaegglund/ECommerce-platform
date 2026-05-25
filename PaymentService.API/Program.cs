@@ -15,6 +15,15 @@ builder.Services.AddDbContext<PaymentDbContext>(options =>
 
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IPaymentService, PaymentServiceImplementation>();
+builder.Services.AddHttpClient<INotificationClient, PaymentService.Api.Services.NotificationClient>((serviceProvider, client) =>
+{
+    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+    var notificationServiceUrl = configuration["Services:NotificationServiceUrl"];
+    if (!string.IsNullOrWhiteSpace(notificationServiceUrl))
+    {
+        client.BaseAddress = new Uri(notificationServiceUrl.TrimEnd('/') + "/");
+    }
+});
 
 builder.Services.AddCors(options =>
 {

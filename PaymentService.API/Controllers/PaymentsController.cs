@@ -43,6 +43,8 @@ public class PaymentsController : ControllerBase
         {
             OrderId = request.OrderId,
             UserId = request.UserId,
+            OrderNumber = request.OrderNumber,
+            RecipientEmail = request.RecipientEmail,
             Amount = request.Amount,
             Currency = request.Currency,
             Method = request.Method,
@@ -150,6 +152,8 @@ public class PaymentsController : ControllerBase
             Id = payment.Id,
             OrderId = payment.OrderId,
             UserId = payment.UserId,
+            OrderNumber = payment.OrderNumber,
+            RecipientEmail = payment.RecipientEmail,
             Amount = payment.Amount,
             Currency = payment.Currency,
             Method = payment.Method,

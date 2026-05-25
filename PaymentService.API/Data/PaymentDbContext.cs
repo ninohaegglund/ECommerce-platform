@@ -19,6 +19,8 @@ public class PaymentDbContext : DbContext
             entity.HasKey(x => x.Id);
 
             entity.Property(x => x.Currency).HasMaxLength(3);
+            entity.Property(x => x.OrderNumber).HasMaxLength(50);
+            entity.Property(x => x.RecipientEmail).HasMaxLength(320);
             entity.Property(x => x.Provider).HasMaxLength(100);
             entity.Property(x => x.TransactionId).HasMaxLength(200);
             entity.Property(x => x.FailureReason).HasMaxLength(1000);
