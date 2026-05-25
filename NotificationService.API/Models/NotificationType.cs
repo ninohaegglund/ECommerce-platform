@@ -4,5 +4,6 @@ public enum NotificationType
 {
     OrderConfirmation = 0,
     PaymentConfirmation = 1,
-    PaymentFailed = 2
+    PaymentFailed = 2,
+    AccountCreated = 3
 }

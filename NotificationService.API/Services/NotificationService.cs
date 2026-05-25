@@ -22,6 +22,24 @@ public class NotificationService : INotificationService
         _logger = logger;
     }
 
+    public Task<NotificationLog> SendAccountCreatedAsync(AccountCreatedRequestDto request, CancellationToken cancellationToken = default)
+    {
+        var subject = "Welcome to Spelvalvet";
+        var body =
+            $"Hello {FormatName(request.FirstName, request.LastName)},\n\n" +
+            "Your Spelvalvet account has been created.\n\n" +
+            "You can now sign in and start shopping.";
+
+        return SendAsync(
+            request.UserId,
+            null,
+            request.RecipientEmail,
+            NotificationType.AccountCreated,
+            subject,
+            body,
+            cancellationToken);
+    }
+
     public Task<NotificationLog> SendOrderConfirmationAsync(OrderConfirmationRequestDto request, CancellationToken cancellationToken = default)
     {
         var subject = $"Order Confirmation - #{request.OrderNumber}";
@@ -82,7 +100,7 @@ public class NotificationService : INotificationService
 
     private async Task<NotificationLog> SendAsync(
         Guid userId,
-        Guid orderId,
+        Guid? orderId,
         string recipientEmail,
         NotificationType type,
         string subject,
@@ -145,6 +163,12 @@ public class NotificationService : INotificationService
     {
         const int maxLength = 1000;
         return message.Length <= maxLength ? message : message[..maxLength];
+    }
+
+    private static string FormatName(string firstName, string lastName)
+    {
+        var fullName = $"{firstName} {lastName}".Trim();
+        return string.IsNullOrWhiteSpace(fullName) ? "there" : fullName;
     }
 
     private static string BuildOrderConfirmationBody(OrderConfirmationRequestDto request)

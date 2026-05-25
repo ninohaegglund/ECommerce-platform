@@ -16,6 +16,13 @@ public class NotificationsController : ControllerBase
         _notificationService = notificationService;
     }
 
+    [HttpPost("account-created")]
+    public async Task<IActionResult> AccountCreated([FromBody] AccountCreatedRequestDto request, CancellationToken cancellationToken)
+    {
+        var notification = await _notificationService.SendAccountCreatedAsync(request, cancellationToken);
+        return ToActionResult(notification);
+    }
+
     [HttpPost("order-confirmation")]
     public async Task<IActionResult> OrderConfirmation([FromBody] OrderConfirmationRequestDto request, CancellationToken cancellationToken)
     {
