@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using PaymentService.Api.Data;
 using PaymentService.Api.Interfaces;
 using PaymentService.Api.Repositories;
+using PaymentService.Api.Services;
 using PaymentServiceImplementation = PaymentService.Api.Services.PaymentService;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,18 @@ builder.Services.AddDbContext<PaymentDbContext>(options =>
 
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IPaymentService, PaymentServiceImplementation>();
+builder.Services.AddHttpClient<IOrderPaymentSyncClient, OrderPaymentSyncClient>((serviceProvider, client) =>
+{
+    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+    var baseUrl = configuration["OrderService:BaseUrl"];
+
+    if (string.IsNullOrWhiteSpace(baseUrl))
+    {
+        throw new InvalidOperationException("OrderService:BaseUrl is not configured.");
+    }
+
+    client.BaseAddress = new Uri(baseUrl);
+});
 
 builder.Services.AddCors(options =>
 {

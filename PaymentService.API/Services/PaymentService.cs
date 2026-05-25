@@ -17,17 +17,27 @@ public class PaymentService : IPaymentService
     };
 
     private readonly IPaymentRepository _paymentRepository;
+    private readonly IOrderPaymentSyncClient _orderPaymentSyncClient;
     private readonly IConfiguration _configuration;
 
-    public PaymentService(IPaymentRepository paymentRepository, IConfiguration configuration)
+    public PaymentService(
+        IPaymentRepository paymentRepository,
+        IOrderPaymentSyncClient orderPaymentSyncClient,
+        IConfiguration configuration)
     {
         _paymentRepository = paymentRepository;
+        _orderPaymentSyncClient = orderPaymentSyncClient;
         _configuration = configuration;
     }
 
     public Task<Payment?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return _paymentRepository.GetByIdAsync(id, cancellationToken);
+    }
+
+    public Task<Payment?> GetByOrderIdAsync(Guid orderId, CancellationToken cancellationToken = default)
+    {
+        return _paymentRepository.GetByOrderIdAsync(orderId, cancellationToken);
     }
 
     public async Task<Payment> CreateAsync(Payment payment, CancellationToken cancellationToken = default)
@@ -56,10 +66,15 @@ public class PaymentService : IPaymentService
         payment.Status = request.IsSuccessful ? PaymentStatus.Captured : PaymentStatus.Failed;
         payment.TransactionId = request.TransactionId;
         payment.FailureReason = request.IsSuccessful ? null : request.FailureReason;
-        payment.ProcessedAtUtc = DateTime.UtcNow;
-        payment.UpdatedAtUtc = DateTime.UtcNow;
+        var now = DateTime.UtcNow;
 
-        return await _paymentRepository.UpdateAsync(payment, cancellationToken);
+        payment.ProcessedAtUtc = now;
+        payment.UpdatedAtUtc = now;
+
+        var updated = await _paymentRepository.UpdateAsync(payment, cancellationToken);
+        await _orderPaymentSyncClient.SyncPaymentAsync(updated, cancellationToken);
+
+        return updated;
     }
 
     public async Task<StripePaymentIntentResponseDto?> CreateStripePaymentIntentAsync(Guid id, CancellationToken cancellationToken = default)
@@ -151,16 +166,21 @@ public class PaymentService : IPaymentService
             return null;
         }
 
+        var now = DateTime.UtcNow;
+
         payment.Status = status;
         payment.FailureReason = failureReason;
-        payment.UpdatedAtUtc = DateTime.UtcNow;
+        payment.UpdatedAtUtc = now;
 
-        if (status is PaymentStatus.Captured or PaymentStatus.Failed or PaymentStatus.Cancelled)
+        if (status is PaymentStatus.Captured or PaymentStatus.Failed or PaymentStatus.Cancelled or PaymentStatus.Refunded)
         {
-            payment.ProcessedAtUtc = DateTime.UtcNow;
+            payment.ProcessedAtUtc = now;
         }
 
-        return await _paymentRepository.UpdateAsync(payment, cancellationToken);
+        var updated = await _paymentRepository.UpdateAsync(payment, cancellationToken);
+        await _orderPaymentSyncClient.SyncPaymentAsync(updated, cancellationToken);
+
+        return updated;
     }
 
     private StripeClient CreateStripeClient()

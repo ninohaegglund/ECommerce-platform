@@ -43,6 +43,20 @@ public class OrdersController : ControllerBase
         return updated is null ? NotFound() : Ok(updated);
     }
 
+    [HttpPatch("{id:guid}/payment")]
+    public async Task<IActionResult> UpdatePayment(Guid id, [FromBody] UpdateOrderPaymentRequestDto request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var updated = await _orderService.UpdatePaymentAsync(id, request, cancellationToken);
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
