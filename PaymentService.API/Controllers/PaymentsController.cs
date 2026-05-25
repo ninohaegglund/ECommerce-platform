@@ -31,6 +31,13 @@ public class PaymentsController : ControllerBase
         return payment is null ? NotFound() : Ok(MapToResponse(payment));
     }
 
+    [HttpGet("order/{orderId:guid}")]
+    public async Task<IActionResult> GetByOrderId(Guid orderId, CancellationToken cancellationToken)
+    {
+        var payment = await _paymentService.GetByOrderIdAsync(orderId, cancellationToken);
+        return payment is null ? NotFound() : Ok(MapToResponse(payment));
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreatePaymentRequestDto request, CancellationToken cancellationToken)
     {
