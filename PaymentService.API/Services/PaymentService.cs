@@ -23,10 +23,9 @@ public class PaymentService : IPaymentService
 
     public PaymentService(
         IPaymentRepository paymentRepository,
+        IOrderPaymentSyncClient orderPaymentSyncClient,
         IConfiguration configuration,
         INotificationClient notificationClient)
-        IOrderPaymentSyncClient orderPaymentSyncClient,
-        IConfiguration configuration)
     {
         _paymentRepository = paymentRepository;
         _orderPaymentSyncClient = orderPaymentSyncClient;
@@ -76,6 +75,7 @@ public class PaymentService : IPaymentService
         payment.UpdatedAtUtc = now;
 
         var updatedPayment = await _paymentRepository.UpdateAsync(payment, cancellationToken);
+        await _orderPaymentSyncClient.SyncPaymentAsync(updatedPayment, cancellationToken);
 
         if (updatedPayment.Status == PaymentStatus.Captured)
         {
@@ -83,10 +83,6 @@ public class PaymentService : IPaymentService
         }
 
         return updatedPayment;
-        var updated = await _paymentRepository.UpdateAsync(payment, cancellationToken);
-        await _orderPaymentSyncClient.SyncPaymentAsync(updated, cancellationToken);
-
-        return updated;
     }
 
     public async Task<StripePaymentIntentResponseDto?> CreateStripePaymentIntentAsync(Guid id, CancellationToken cancellationToken = default)
@@ -191,6 +187,7 @@ public class PaymentService : IPaymentService
         }
 
         var updatedPayment = await _paymentRepository.UpdateAsync(payment, cancellationToken);
+        await _orderPaymentSyncClient.SyncPaymentAsync(updatedPayment, cancellationToken);
 
         if (!wasCaptured && updatedPayment.Status == PaymentStatus.Captured)
         {
@@ -198,10 +195,6 @@ public class PaymentService : IPaymentService
         }
 
         return updatedPayment;
-        var updated = await _paymentRepository.UpdateAsync(payment, cancellationToken);
-        await _orderPaymentSyncClient.SyncPaymentAsync(updated, cancellationToken);
-
-        return updated;
     }
 
     private async Task SendPaymentConfirmationAsync(Payment payment, CancellationToken cancellationToken)

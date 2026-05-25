@@ -24,6 +24,8 @@ builder.Services.AddHttpClient<INotificationClient, PaymentService.Api.Services.
     {
         client.BaseAddress = new Uri(notificationServiceUrl.TrimEnd('/') + "/");
     }
+});
+
 builder.Services.AddHttpClient<IOrderPaymentSyncClient, OrderPaymentSyncClient>((serviceProvider, client) =>
 {
     var configuration = serviceProvider.GetRequiredService<IConfiguration>();
