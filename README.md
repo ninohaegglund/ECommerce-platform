@@ -92,6 +92,25 @@ The current payment flow is:
 4. Confirm the payment in the frontend with Stripe.js.
 5. Update local payment status from a Stripe webhook or a backend status sync flow.
 
+## Resend Email Setup
+
+NotificationService sends transactional email through Resend for order confirmations, payment confirmations, and failed payment notifications.
+
+Store the Resend API key with user-secrets during local development:
+
+```powershell
+dotnet user-secrets set "Resend:ApiKey" "re_..." --project .\NotificationService.API\NotificationService.API.csproj
+```
+
+The default sender is configured in `NotificationService.API/appsettings.json` as `onboarding@resend.dev` for development. For a verified domain, override the sender email and name:
+
+```powershell
+dotnet user-secrets set "Resend:FromEmail" "orders@example.com" --project .\NotificationService.API\NotificationService.API.csproj
+dotnet user-secrets set "Resend:FromName" "ECommerce Platform" --project .\NotificationService.API\NotificationService.API.csproj
+```
+
+If Resend rejects a send request, NotificationService stores the notification log with `Failed` status and returns the notification response with HTTP 502.
+
 ## Useful Commands
 
 List stored development secrets for PaymentService:
