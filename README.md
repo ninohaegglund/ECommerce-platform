@@ -94,7 +94,10 @@ The current payment flow is:
 
 ## Resend Email Setup
 
-NotificationService sends transactional email through Resend for order confirmations, payment confirmations, and failed payment notifications.
+NotificationService sends transactional email through Resend. The current app flow sends:
+
+1. A welcome email when IdentityService creates a user account.
+2. A payment confirmation email when PaymentService captures a payment.
 
 Store the Resend API key with user-secrets during local development:
 
@@ -110,6 +113,22 @@ dotnet user-secrets set "Resend:FromName" "ECommerce Platform" --project .\Notif
 ```
 
 If Resend rejects a send request, NotificationService stores the notification log with `Failed` status and returns the notification response with HTTP 502.
+
+IdentityService and PaymentService call NotificationService through:
+
+```json
+"Services": {
+  "NotificationServiceUrl": "http://localhost:5205"
+}
+```
+
+Run the NotificationService and apply the latest migrations before testing the full email flow:
+
+```powershell
+dotnet ef database update --project .\NotificationService.API\NotificationService.API.csproj
+dotnet ef database update --project .\PaymentService.API\PaymentService.API.csproj
+dotnet run --project .\NotificationService.API\NotificationService.API.csproj
+```
 
 ## Useful Commands
 
