@@ -14,6 +14,8 @@ public class OrderDbContext : DbContext
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<Cart> Carts => Set<Cart>();
     public DbSet<CartItem> CartItems => Set<CartItem>();
+    public DbSet<Wishlist> Wishlists => Set<Wishlist>();
+    public DbSet<WishlistItem> WishlistItems => Set<WishlistItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -59,6 +61,27 @@ public class OrderDbContext : DbContext
             entity.HasKey(x => x.Id);
             entity.Property(x => x.ProductName).HasMaxLength(200);
             entity.Property(x => x.Sku).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<Wishlist>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => x.UserId).IsUnique();
+
+            entity.HasMany(x => x.Items)
+                .WithOne()
+                .HasForeignKey(x => x.WishlistId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WishlistItem>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.ProductName).HasMaxLength(200);
+            entity.Property(x => x.Sku).HasMaxLength(100);
+            entity.Property(x => x.UnitPrice).HasColumnType("decimal(18,2)");
+            entity.Property(x => x.Currency).HasMaxLength(3);
+            entity.HasIndex(x => new { x.WishlistId, x.ProductId }).IsUnique();
         });
     }
 }
