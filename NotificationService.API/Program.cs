@@ -2,7 +2,9 @@ using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using NotificationService.Api.Data;
 using NotificationService.Api.Interfaces;
+using NotificationService.Api.Options;
 using NotificationService.Api.Repositories;
+using NotificationService.Api.Services;
 using NotificationServiceImplementation = NotificationService.Api.Services.NotificationService;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,6 +34,8 @@ builder.Services.AddDbContext<NotificationDbContext>(options =>
 
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationServiceImplementation>();
+builder.Services.Configure<ResendOptions>(builder.Configuration.GetSection(ResendOptions.SectionName));
+builder.Services.AddHttpClient<IEmailSender, ResendEmailSender>();
 
 var app = builder.Build();
 

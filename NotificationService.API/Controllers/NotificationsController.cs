@@ -57,6 +57,9 @@ public class NotificationsController : ControllerBase
             Body = notification.Body,
             SentAtUtc = notification.SentAtUtc,
             Status = notification.Status,
+            Provider = notification.Provider,
+            ProviderMessageId = notification.ProviderMessageId,
+            FailureReason = notification.FailureReason,
             CreatedAtUtc = notification.CreatedAtUtc
         };
     }

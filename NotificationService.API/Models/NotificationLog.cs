@@ -16,6 +16,9 @@ public class NotificationLog
     public DateTime? SentAtUtc { get; set; }
 
     public NotificationStatus Status { get; set; } = NotificationStatus.Pending;
+    public string? Provider { get; set; }
+    public string? ProviderMessageId { get; set; }
+    public string? FailureReason { get; set; }
 
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 }
