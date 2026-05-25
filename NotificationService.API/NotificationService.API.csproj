@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>NotificationService.API-b484a936-a2e8-4836-a6c9-c4d69f972351</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

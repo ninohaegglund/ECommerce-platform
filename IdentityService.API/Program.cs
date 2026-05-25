@@ -14,6 +14,15 @@ builder.Services.AddDbContext<IdentityDbContext>(options =>
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddHttpClient<INotificationClient, NotificationClient>((serviceProvider, client) =>
+{
+    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+    var notificationServiceUrl = configuration["Services:NotificationServiceUrl"];
+    if (!string.IsNullOrWhiteSpace(notificationServiceUrl))
+    {
+        client.BaseAddress = new Uri(notificationServiceUrl.TrimEnd('/') + "/");
+    }
+});
 
 builder.Services.AddJwtAuthentication(builder.Configuration);
 

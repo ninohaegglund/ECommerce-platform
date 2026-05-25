@@ -6,6 +6,8 @@ public class CreatePaymentRequestDto
 {
     public Guid OrderId { get; set; }
     public Guid UserId { get; set; }
+    public string OrderNumber { get; set; } = string.Empty;
+    public string RecipientEmail { get; set; } = string.Empty;
     public decimal Amount { get; set; }
     public string Currency { get; set; } = "SEK";
     public PaymentMethod Method { get; set; } = PaymentMethod.Card;

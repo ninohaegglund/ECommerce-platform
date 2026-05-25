@@ -9,12 +9,35 @@ namespace NotificationService.Api.Services;
 public class NotificationService : INotificationService
 {
     private readonly INotificationRepository _notificationRepository;
+    private readonly IEmailSender _emailSender;
     private readonly ILogger<NotificationService> _logger;
 
-    public NotificationService(INotificationRepository notificationRepository, ILogger<NotificationService> logger)
+    public NotificationService(
+        INotificationRepository notificationRepository,
+        IEmailSender emailSender,
+        ILogger<NotificationService> logger)
     {
         _notificationRepository = notificationRepository;
+        _emailSender = emailSender;
         _logger = logger;
+    }
+
+    public Task<NotificationLog> SendAccountCreatedAsync(AccountCreatedRequestDto request, CancellationToken cancellationToken = default)
+    {
+        var subject = "Welcome to Spelvalvet";
+        var body =
+            $"Hello {FormatName(request.FirstName, request.LastName)},\n\n" +
+            "Your Spelvalvet account has been created.\n\n" +
+            "You can now sign in and start shopping.";
+
+        return SendAsync(
+            request.UserId,
+            null,
+            request.RecipientEmail,
+            NotificationType.AccountCreated,
+            subject,
+            body,
+            cancellationToken);
     }
 
     public Task<NotificationLog> SendOrderConfirmationAsync(OrderConfirmationRequestDto request, CancellationToken cancellationToken = default)
@@ -77,7 +100,7 @@ public class NotificationService : INotificationService
 
     private async Task<NotificationLog> SendAsync(
         Guid userId,
-        Guid orderId,
+        Guid? orderId,
         string recipientEmail,
         NotificationType type,
         string subject,
@@ -96,13 +119,56 @@ public class NotificationService : INotificationService
         };
 
         _logger.LogInformation(
-            "Notification {Type} to {Recipient} | Subject: {Subject}\n{Body}",
-            type, recipientEmail, subject, body);
+            "Sending notification {Type} to {Recipient} | Subject: {Subject}",
+            type, recipientEmail, subject);
 
-        notification.Status = NotificationStatus.Sent;
-        notification.SentAtUtc = DateTime.UtcNow;
+        try
+        {
+            var sendResult = await _emailSender.SendAsync(
+                new EmailSendRequest(
+                    recipientEmail,
+                    subject,
+                    body,
+                    IdempotencyKey: notification.Id.ToString("N")),
+                cancellationToken);
+
+            notification.Provider = sendResult.Provider;
+            notification.ProviderMessageId = sendResult.MessageId;
+            notification.Status = NotificationStatus.Sent;
+            notification.SentAtUtc = DateTime.UtcNow;
+        }
+        catch (Exception exception)
+        {
+            notification.Status = NotificationStatus.Failed;
+            notification.FailureReason = LimitFailureReason(exception.Message);
+
+            _logger.LogError(
+                exception,
+                "Failed to send notification {Type} to {Recipient} | Subject: {Subject}",
+                type,
+                recipientEmail,
+                subject);
+        }
+
+        _logger.LogInformation(
+            "Notification {Type} to {Recipient} finished with status {Status}",
+            type,
+            recipientEmail,
+            notification.Status);
 
         return await _notificationRepository.AddAsync(notification, cancellationToken);
+    }
+
+    private static string LimitFailureReason(string message)
+    {
+        const int maxLength = 1000;
+        return message.Length <= maxLength ? message : message[..maxLength];
+    }
+
+    private static string FormatName(string firstName, string lastName)
+    {
+        var fullName = $"{firstName} {lastName}".Trim();
+        return string.IsNullOrWhiteSpace(fullName) ? "there" : fullName;
     }
 
     private static string BuildOrderConfirmationBody(OrderConfirmationRequestDto request)

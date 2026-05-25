@@ -21,6 +21,9 @@ public class NotificationDbContext : DbContext
             entity.Property(x => x.RecipientEmail).HasMaxLength(320);
             entity.Property(x => x.Subject).HasMaxLength(300);
             entity.Property(x => x.Body).HasMaxLength(4000);
+            entity.Property(x => x.Provider).HasMaxLength(100);
+            entity.Property(x => x.ProviderMessageId).HasMaxLength(200);
+            entity.Property(x => x.FailureReason).HasMaxLength(1000);
 
             entity.HasIndex(x => x.UserId);
             entity.HasIndex(x => x.OrderId);

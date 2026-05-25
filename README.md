@@ -92,6 +92,44 @@ The current payment flow is:
 4. Confirm the payment in the frontend with Stripe.js.
 5. Update local payment status from a Stripe webhook or a backend status sync flow.
 
+## Resend Email Setup
+
+NotificationService sends transactional email through Resend. The current app flow sends:
+
+1. A welcome email when IdentityService creates a user account.
+2. A payment confirmation email when PaymentService captures a payment.
+
+Store the Resend API key with user-secrets during local development:
+
+```powershell
+dotnet user-secrets set "Resend:ApiKey" "re_..." --project .\NotificationService.API\NotificationService.API.csproj
+```
+
+The default sender is configured in `NotificationService.API/appsettings.json` as `onboarding@resend.dev` for development. For a verified domain, override the sender email and name:
+
+```powershell
+dotnet user-secrets set "Resend:FromEmail" "orders@example.com" --project .\NotificationService.API\NotificationService.API.csproj
+dotnet user-secrets set "Resend:FromName" "ECommerce Platform" --project .\NotificationService.API\NotificationService.API.csproj
+```
+
+If Resend rejects a send request, NotificationService stores the notification log with `Failed` status and returns the notification response with HTTP 502.
+
+IdentityService and PaymentService call NotificationService through:
+
+```json
+"Services": {
+  "NotificationServiceUrl": "http://localhost:5205"
+}
+```
+
+Run the NotificationService and apply the latest migrations before testing the full email flow:
+
+```powershell
+dotnet ef database update --project .\NotificationService.API\NotificationService.API.csproj
+dotnet ef database update --project .\PaymentService.API\PaymentService.API.csproj
+dotnet run --project .\NotificationService.API\NotificationService.API.csproj
+```
+
 ## Useful Commands
 
 List stored development secrets for PaymentService:
