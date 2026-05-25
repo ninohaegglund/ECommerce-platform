@@ -19,6 +19,13 @@ public class PaymentRepository : IPaymentRepository
         return _dbContext.Payments.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
+    public Task<Payment?> GetByOrderIdAsync(Guid orderId, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Payments
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .FirstOrDefaultAsync(x => x.OrderId == orderId, cancellationToken);
+    }
+
     public Task<Payment?> GetByTransactionIdAsync(string transactionId, CancellationToken cancellationToken = default)
     {
         return _dbContext.Payments.FirstOrDefaultAsync(x => x.TransactionId == transactionId, cancellationToken);
