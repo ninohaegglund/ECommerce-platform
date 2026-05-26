@@ -11,6 +11,7 @@ public class NotificationDbContext : DbContext
     }
 
     public DbSet<NotificationLog> NotificationLogs => Set<NotificationLog>();
+    public DbSet<NewsletterSubscriber> NewsletterSubscribers => Set<NewsletterSubscriber>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -27,6 +28,18 @@ public class NotificationDbContext : DbContext
 
             entity.HasIndex(x => x.UserId);
             entity.HasIndex(x => x.OrderId);
+        });
+
+        modelBuilder.Entity<NewsletterSubscriber>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Email).HasMaxLength(320);
+            entity.Property(x => x.FirstName).HasMaxLength(100);
+            entity.Property(x => x.LastName).HasMaxLength(100);
+
+            entity.HasIndex(x => x.Email).IsUnique();
+            entity.HasIndex(x => x.IsSubscribed);
         });
     }
 }
