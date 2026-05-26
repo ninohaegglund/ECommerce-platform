@@ -29,13 +29,22 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+var allowedFrontendOrigins = new[]
+{
+    "http://localhost:5173",
+    "https://localhost:5173",
+    "https://spelvalvet.shop",
+    "https://www.spelvalvet.shop"
+};
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
-        .AllowAnyHeader()
-        .AllowAnyMethod();
+        policy
+            .WithOrigins(allowedFrontendOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
     });
 });
 

@@ -27,12 +27,21 @@ builder.Services.AddSwaggerGen(options =>
     });
 
 });
+
+var allowedFrontendOrigins = new[]
+{
+    "http://localhost:5173",
+    "https://localhost:5173",
+    "https://spelvalvet.shop",
+    "https://www.spelvalvet.shop"
+};
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5173", "https://localhost:5173")
+            .WithOrigins(allowedFrontendOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
