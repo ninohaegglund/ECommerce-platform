@@ -98,6 +98,7 @@ NotificationService sends transactional email through Resend. The current app fl
 
 1. A welcome email when IdentityService creates a user account.
 2. A payment confirmation email when PaymentService captures a payment.
+3. Newsletter emails to active subscribers in NotificationService.
 
 Store the Resend API key with user-secrets during local development:
 
@@ -128,6 +129,34 @@ Run the NotificationService and apply the latest migrations before testing the f
 dotnet ef database update --project .\NotificationService.API\NotificationService.API.csproj
 dotnet ef database update --project .\PaymentService.API\PaymentService.API.csproj
 dotnet run --project .\NotificationService.API\NotificationService.API.csproj
+```
+
+Newsletter endpoints are available in NotificationService:
+
+```text
+POST /api/newsletter/subscribe
+POST /api/newsletter/unsubscribe
+GET  /api/newsletter/subscribers
+POST /api/newsletter/send
+```
+
+Example subscribe payload:
+
+```json
+{
+  "email": "customer@example.com",
+  "firstName": "Ada",
+  "lastName": "Lovelace"
+}
+```
+
+Example send payload:
+
+```json
+{
+  "subject": "News from Spelvalvet",
+  "body": "We have new games in stock."
+}
 ```
 
 ## Useful Commands

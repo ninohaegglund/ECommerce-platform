@@ -4,7 +4,7 @@ public class NotificationLog
 {
     public Guid Id { get; set; } = Guid.NewGuid();
 
-    public Guid UserId { get; set; }
+    public Guid? UserId { get; set; }
     public Guid? OrderId { get; set; }
 
     public NotificationType Type { get; set; }
