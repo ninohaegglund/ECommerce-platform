@@ -7,10 +7,20 @@ namespace NotificationService.Api.Services;
 public class NewsletterService : INewsletterService
 {
     private readonly INewsletterRepository _newsletterRepository;
+    private readonly INotificationRepository _notificationRepository;
+    private readonly IEmailSender _emailSender;
+    private readonly ILogger<NewsletterService> _logger;
 
-    public NewsletterService(INewsletterRepository newsletterRepository)
+    public NewsletterService(
+        INewsletterRepository newsletterRepository,
+        INotificationRepository notificationRepository,
+        IEmailSender emailSender,
+        ILogger<NewsletterService> logger)
     {
         _newsletterRepository = newsletterRepository;
+        _notificationRepository = notificationRepository;
+        _emailSender = emailSender;
+        _logger = logger;
     }
 
     public async Task<NewsletterSubscriber> SubscribeAsync(
@@ -66,4 +76,82 @@ public class NewsletterService : INewsletterService
         bool includeUnsubscribed,
         CancellationToken cancellationToken = default)
         => _newsletterRepository.GetSubscribersAsync(includeUnsubscribed, cancellationToken);
+
+    public async Task<NewsletterSendResponseDto> SendAsync(
+        SendNewsletterRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        var subscribers = await _newsletterRepository.GetSubscribersAsync(includeUnsubscribed: false, cancellationToken);
+        var response = new NewsletterSendResponseDto
+        {
+            TotalSubscribers = subscribers.Count
+        };
+
+        foreach (var subscriber in subscribers)
+        {
+            var notification = new NotificationLog
+            {
+                Type = NotificationType.Newsletter,
+                RecipientEmail = subscriber.Email,
+                Subject = request.Subject,
+                Body = request.Body,
+                Status = NotificationStatus.Pending
+            };
+
+            try
+            {
+                var sendResult = await _emailSender.SendAsync(
+                    new EmailSendRequest(
+                        subscriber.Email,
+                        request.Subject,
+                        BuildPersonalizedBody(request.Body, subscriber),
+                        request.HtmlBody,
+                        notification.Id.ToString("N")),
+                    cancellationToken);
+
+                notification.Provider = sendResult.Provider;
+                notification.ProviderMessageId = sendResult.MessageId;
+                notification.Status = NotificationStatus.Sent;
+                notification.SentAtUtc = DateTime.UtcNow;
+                response.SentCount++;
+            }
+            catch (Exception exception)
+            {
+                notification.Status = NotificationStatus.Failed;
+                notification.FailureReason = LimitFailureReason(exception.Message);
+                response.FailedCount++;
+
+                _logger.LogWarning(
+                    exception,
+                    "Could not send newsletter email to {Email}.",
+                    subscriber.Email);
+            }
+
+            await _notificationRepository.AddAsync(notification, cancellationToken);
+
+            response.Recipients.Add(new NewsletterRecipientResultDto
+            {
+                Email = subscriber.Email,
+                Status = notification.Status,
+                ProviderMessageId = notification.ProviderMessageId,
+                FailureReason = notification.FailureReason
+            });
+        }
+
+        return response;
+    }
+
+    private static string BuildPersonalizedBody(string body, NewsletterSubscriber subscriber)
+    {
+        var name = $"{subscriber.FirstName} {subscriber.LastName}".Trim();
+        return string.IsNullOrWhiteSpace(name)
+            ? body
+            : $"Hello {name},\n\n{body}";
+    }
+
+    private static string LimitFailureReason(string message)
+    {
+        const int maxLength = 1000;
+        return message.Length <= maxLength ? message : message[..maxLength];
+    }
 }

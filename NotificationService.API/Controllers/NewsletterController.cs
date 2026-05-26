@@ -39,6 +39,13 @@ public class NewsletterController : ControllerBase
         return Ok(subscribers.Select(MapToResponse));
     }
 
+    [HttpPost("send")]
+    public async Task<IActionResult> Send([FromBody] SendNewsletterRequestDto request, CancellationToken cancellationToken)
+    {
+        var response = await _newsletterService.SendAsync(request, cancellationToken);
+        return Ok(response);
+    }
+
     private static NewsletterSubscriberResponseDto MapToResponse(NewsletterSubscriber subscriber)
     {
         return new NewsletterSubscriberResponseDto
