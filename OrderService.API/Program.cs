@@ -77,12 +77,25 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddDbContext<OrderDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<IWishlistRepository, WishlistRepository>();
 builder.Services.AddScoped<IOrderService, OrderServiceImplementation>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
+builder.Services.AddHttpClient<IIdentityUserClient, IdentityUserClient>((serviceProvider, client) =>
+{
+    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+    var identityServiceUrl = configuration["Services:IdentityServiceUrl"];
+
+    if (string.IsNullOrWhiteSpace(identityServiceUrl))
+    {
+        throw new InvalidOperationException("Services:IdentityServiceUrl is not configured.");
+    }
+
+    client.BaseAddress = new Uri(identityServiceUrl.TrimEnd('/') + "/");
+});
 builder.Services.AddHttpClient("CatalogClient", client =>
 {
     // Replace with the actual URL/Port of your running CatalogService.API
