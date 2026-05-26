@@ -5,7 +5,7 @@ namespace NotificationService.Api.DTOs.Notifications;
 public class NotificationResponseDto
 {
     public Guid Id { get; set; }
-    public Guid UserId { get; set; }
+    public Guid? UserId { get; set; }
     public Guid? OrderId { get; set; }
 
     public NotificationType Type { get; set; }
