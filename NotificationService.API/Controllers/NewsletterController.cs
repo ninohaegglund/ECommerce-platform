@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NotificationService.Api.DTOs.Newsletter;
 using NotificationService.Api.Interfaces;
@@ -17,6 +18,7 @@ public class NewsletterController : ControllerBase
     }
 
     [HttpPost("subscribe")]
+    [AllowAnonymous]
     public async Task<IActionResult> Subscribe([FromBody] SubscribeNewsletterRequestDto request, CancellationToken cancellationToken)
     {
         var subscriber = await _newsletterService.SubscribeAsync(request, cancellationToken);
@@ -24,6 +26,7 @@ public class NewsletterController : ControllerBase
     }
 
     [HttpPost("unsubscribe")]
+    [AllowAnonymous]
     public async Task<IActionResult> Unsubscribe([FromBody] UnsubscribeNewsletterRequestDto request, CancellationToken cancellationToken)
     {
         var subscriber = await _newsletterService.UnsubscribeAsync(request, cancellationToken);
@@ -31,6 +34,7 @@ public class NewsletterController : ControllerBase
     }
 
     [HttpGet("subscribers")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetSubscribers(
         [FromQuery] bool includeUnsubscribed = false,
         CancellationToken cancellationToken = default)
@@ -40,9 +44,18 @@ public class NewsletterController : ControllerBase
     }
 
     [HttpPost("send")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Send([FromBody] SendNewsletterRequestDto request, CancellationToken cancellationToken)
     {
         var response = await _newsletterService.SendAsync(request, cancellationToken);
+        return Ok(response);
+    }
+
+    [HttpPost("send-test")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> SendTest([FromBody] SendNewsletterTestRequestDto request, CancellationToken cancellationToken)
+    {
+        var response = await _newsletterService.SendTestAsync(request, cancellationToken);
         return Ok(response);
     }
 

@@ -141,6 +141,57 @@ public class NewsletterService : INewsletterService
         return response;
     }
 
+    public async Task<NewsletterRecipientResultDto> SendTestAsync(
+        SendNewsletterTestRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        var notification = new NotificationLog
+        {
+            Type = NotificationType.Newsletter,
+            RecipientEmail = request.RecipientEmail,
+            Subject = request.Subject,
+            Body = request.Body,
+            Status = NotificationStatus.Pending
+        };
+
+        try
+        {
+            var sendResult = await _emailSender.SendAsync(
+                new EmailSendRequest(
+                    request.RecipientEmail,
+                    request.Subject,
+                    request.Body,
+                    request.HtmlBody,
+                    notification.Id.ToString("N")),
+                cancellationToken);
+
+            notification.Provider = sendResult.Provider;
+            notification.ProviderMessageId = sendResult.MessageId;
+            notification.Status = NotificationStatus.Sent;
+            notification.SentAtUtc = DateTime.UtcNow;
+        }
+        catch (Exception exception)
+        {
+            notification.Status = NotificationStatus.Failed;
+            notification.FailureReason = LimitFailureReason(exception.Message);
+
+            _logger.LogWarning(
+                exception,
+                "Could not send newsletter test email to {Email}.",
+                request.RecipientEmail);
+        }
+
+        await _notificationRepository.AddAsync(notification, cancellationToken);
+
+        return new NewsletterRecipientResultDto
+        {
+            Email = request.RecipientEmail,
+            Status = notification.Status,
+            ProviderMessageId = notification.ProviderMessageId,
+            FailureReason = notification.FailureReason
+        };
+    }
+
     private static string BuildPersonalizedBody(string body, NewsletterSubscriber subscriber)
     {
         var name = $"{subscriber.FirstName} {subscriber.LastName}".Trim();
