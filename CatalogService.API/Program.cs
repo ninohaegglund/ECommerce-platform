@@ -46,11 +46,10 @@ builder.Services.AddScoped<IProductService, ProductService>();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+
+app.UseSwagger();
+app.UseSwaggerUI();
+
 
 using (var scope = app.Services.CreateScope())
 {
@@ -65,6 +64,8 @@ var configuredPath = app.Configuration.GetValue<string>("ProductImages:UploadPat
 var uploadRoot = string.IsNullOrWhiteSpace(configuredPath)
     ? Path.Combine(app.Environment.ContentRootPath, "Uploads", "Products")
     : configuredPath;
+
+Directory.CreateDirectory(uploadRoot);
 
 app.UseStaticFiles(new StaticFileOptions
 {
