@@ -134,10 +134,17 @@ dotnet run --project .\NotificationService.API\NotificationService.API.csproj
 Newsletter endpoints are available in NotificationService:
 
 ```text
-POST /api/newsletter/subscribe
-POST /api/newsletter/unsubscribe
-GET  /api/newsletter/subscribers
-POST /api/newsletter/send
+POST /api/newsletter/subscribe       Public
+POST /api/newsletter/unsubscribe     Public
+GET  /api/newsletter/subscribers     Admin JWT required
+POST /api/newsletter/send-test       Admin JWT required
+POST /api/newsletter/send            Admin JWT required
+```
+
+Admin newsletter endpoints use the same JWT settings as IdentityService. Send the admin token as:
+
+```http
+Authorization: Bearer <token>
 ```
 
 Example subscribe payload:
@@ -154,6 +161,16 @@ Example send payload:
 
 ```json
 {
+  "subject": "News from Spelvalvet",
+  "body": "We have new games in stock."
+}
+```
+
+Example test send payload:
+
+```json
+{
+  "recipientEmail": "admin@example.com",
   "subject": "News from Spelvalvet",
   "body": "We have new games in stock."
 }
