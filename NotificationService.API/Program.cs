@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using NotificationService.Api.Data;
 using NotificationService.Api.Interfaces;
+using NotificationService.Api.JWT;
 using NotificationService.Api.Options;
 using NotificationService.Api.Repositories;
 using NotificationService.Api.Services;
@@ -17,6 +18,7 @@ builder.Services.AddControllers()
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddJwtAuthentication(builder.Configuration);
 
 var allowedFrontendOrigins = new[]
 {
@@ -63,6 +65,7 @@ using (var scope = app.Services.CreateScope())
 
 app.UseHttpsRedirection();
 app.UseCors("FrontendPolicy");
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
