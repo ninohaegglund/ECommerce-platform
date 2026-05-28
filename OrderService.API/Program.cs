@@ -96,10 +96,17 @@ builder.Services.AddHttpClient<IIdentityUserClient, IdentityUserClient>((service
 
     client.BaseAddress = new Uri(identityServiceUrl.TrimEnd('/') + "/");
 });
-builder.Services.AddHttpClient("CatalogClient", client =>
+builder.Services.AddHttpClient("CatalogClient", (serviceProvider, client) =>
 {
-    // Replace with the actual URL/Port of your running CatalogService.API
-    client.BaseAddress = new Uri("https://localhost:7019/"); 
+    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+    var catalogServiceUrl = configuration["Services:CatalogServiceUrl"];
+
+    if (string.IsNullOrWhiteSpace(catalogServiceUrl))
+    {
+        throw new InvalidOperationException("Services:CatalogServiceUrl is not configured.");
+    }
+
+    client.BaseAddress = new Uri(catalogServiceUrl.TrimEnd('/') + "/");
 });
 
 var app = builder.Build();
