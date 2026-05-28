@@ -77,14 +77,14 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost("{id:guid}/images")]
-    public async Task<IActionResult> UploadImage(
+    public async Task<IActionResult> AddImage(
         Guid id,
-        [FromForm] ProductImageUploadRequestDto request,
+        [FromBody] ProductImageRequestDto request,
         CancellationToken cancellationToken)
     {
         var image = await _productService.AddImageAsync(
             id,
-            request.Image,
+            request.ImageUrl,
             request.AltText,
             request.SortOrder,
             request.IsPrimary,
@@ -159,7 +159,7 @@ public class ProductsController : ControllerBase
     {
         return new ProductImage
         {
-            ImageUrl = image.ImageUrl,
+            ImageUrl = image.ImageUrl.Trim(),
             AltText = image.AltText,
             SortOrder = image.SortOrder,
             IsPrimary = image.IsPrimary

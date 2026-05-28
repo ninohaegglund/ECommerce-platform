@@ -1,5 +1,4 @@
 using CatalogService.Api.Models;
-using Microsoft.AspNetCore.Http;
 
 namespace CatalogService.Api.Interfaces;
 
@@ -10,6 +9,6 @@ public interface IProductService
     Task<IReadOnlyList<Product>> GetByCategoryIdAsync(Guid categoryId, CancellationToken cancellationToken = default);
     Task<Product?> CreateAsync(Product product, CancellationToken cancellationToken = default);
     Task<Product?> UpdateAsync(Product product, CancellationToken cancellationToken = default);
-    Task<ProductImage?> AddImageAsync(Guid productId, IFormFile image, string altText, int sortOrder, bool isPrimary, CancellationToken cancellationToken = default);
+    Task<ProductImage?> AddImageAsync(Guid productId, string imageUrl, string altText, int sortOrder, bool isPrimary, CancellationToken cancellationToken = default);
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }
