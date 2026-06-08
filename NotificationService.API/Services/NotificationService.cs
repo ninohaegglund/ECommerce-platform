@@ -40,6 +40,38 @@ public class NotificationService : INotificationService
             cancellationToken);
     }
 
+    public Task<NotificationLog> SendEmailVerificationAsync(EmailVerificationRequestDto request, CancellationToken cancellationToken = default)
+    {
+        var subject = "Verify your Spelvalvet email";
+        var body = BuildEmailVerificationBody(request);
+
+        return SendAsync(
+            request.UserId,
+            null,
+            request.RecipientEmail,
+            NotificationType.EmailVerification,
+            subject,
+            body,
+            cancellationToken,
+            "Email verification instructions were sent.");
+    }
+
+    public Task<NotificationLog> SendPasswordResetAsync(PasswordResetRequestDto request, CancellationToken cancellationToken = default)
+    {
+        var subject = "Reset your Spelvalvet password";
+        var body = BuildPasswordResetBody(request);
+
+        return SendAsync(
+            request.UserId,
+            null,
+            request.RecipientEmail,
+            NotificationType.PasswordReset,
+            subject,
+            body,
+            cancellationToken,
+            "Password reset instructions were sent.");
+    }
+
     public Task<NotificationLog> SendOrderConfirmationAsync(OrderConfirmationRequestDto request, CancellationToken cancellationToken = default)
     {
         var subject = $"Order Confirmation - #{request.OrderNumber}";
@@ -105,7 +137,8 @@ public class NotificationService : INotificationService
         NotificationType type,
         string subject,
         string body,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? logBody = null)
     {
         var notification = new NotificationLog
         {
@@ -114,7 +147,7 @@ public class NotificationService : INotificationService
             Type = type,
             RecipientEmail = recipientEmail,
             Subject = subject,
-            Body = body,
+            Body = logBody ?? body,
             Status = NotificationStatus.Pending
         };
 
@@ -169,6 +202,48 @@ public class NotificationService : INotificationService
     {
         var fullName = $"{firstName} {lastName}".Trim();
         return string.IsNullOrWhiteSpace(fullName) ? "there" : fullName;
+    }
+
+    private static string BuildEmailVerificationBody(EmailVerificationRequestDto request)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine($"Hello {FormatName(request.FirstName, request.LastName)},");
+        builder.AppendLine();
+        builder.AppendLine("Please verify your Spelvalvet email address before signing in.");
+        builder.AppendLine();
+
+        if (!string.IsNullOrWhiteSpace(request.VerificationUrl))
+        {
+            builder.AppendLine($"Verify your email: {request.VerificationUrl}");
+            builder.AppendLine();
+        }
+
+        builder.AppendLine($"Verification code: {request.VerificationToken}");
+        builder.AppendLine($"This code expires at {request.ExpiresAtUtc:yyyy-MM-dd HH:mm} UTC.");
+        builder.AppendLine();
+        builder.AppendLine("If you did not create this account, you can ignore this email.");
+        return builder.ToString();
+    }
+
+    private static string BuildPasswordResetBody(PasswordResetRequestDto request)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine($"Hello {FormatName(request.FirstName, request.LastName)},");
+        builder.AppendLine();
+        builder.AppendLine("We received a request to reset your Spelvalvet password.");
+        builder.AppendLine();
+
+        if (!string.IsNullOrWhiteSpace(request.ResetUrl))
+        {
+            builder.AppendLine($"Reset your password: {request.ResetUrl}");
+            builder.AppendLine();
+        }
+
+        builder.AppendLine($"Reset code: {request.ResetToken}");
+        builder.AppendLine($"This code expires at {request.ExpiresAtUtc:yyyy-MM-dd HH:mm} UTC.");
+        builder.AppendLine();
+        builder.AppendLine("If you did not request this reset, you can ignore this email.");
+        return builder.ToString();
     }
 
     private static string BuildOrderConfirmationBody(OrderConfirmationRequestDto request)
