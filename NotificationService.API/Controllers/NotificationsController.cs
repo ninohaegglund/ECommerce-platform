@@ -23,6 +23,20 @@ public class NotificationsController : ControllerBase
         return ToActionResult(notification);
     }
 
+    [HttpPost("email-verification")]
+    public async Task<IActionResult> EmailVerification([FromBody] EmailVerificationRequestDto request, CancellationToken cancellationToken)
+    {
+        var notification = await _notificationService.SendEmailVerificationAsync(request, cancellationToken);
+        return ToActionResult(notification);
+    }
+
+    [HttpPost("password-reset")]
+    public async Task<IActionResult> PasswordReset([FromBody] PasswordResetRequestDto request, CancellationToken cancellationToken)
+    {
+        var notification = await _notificationService.SendPasswordResetAsync(request, cancellationToken);
+        return ToActionResult(notification);
+    }
+
     [HttpPost("order-confirmation")]
     public async Task<IActionResult> OrderConfirmation([FromBody] OrderConfirmationRequestDto request, CancellationToken cancellationToken)
     {
