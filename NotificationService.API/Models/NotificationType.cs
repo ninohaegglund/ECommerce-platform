@@ -6,5 +6,7 @@ public enum NotificationType
     PaymentConfirmation = 1,
     PaymentFailed = 2,
     AccountCreated = 3,
-    Newsletter = 4
+    Newsletter = 4,
+    EmailVerification = 5,
+    PasswordReset = 6
 }

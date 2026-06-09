@@ -26,6 +26,8 @@ namespace IdentityService.API.Data
                 entity.Property(x => x.LastName).IsRequired().HasMaxLength(100);
                 entity.Property(x => x.Email).IsRequired().HasMaxLength(200);
                 entity.Property(x => x.PasswordHash).IsRequired();
+                entity.Property(x => x.EmailVerificationTokenHash).HasMaxLength(128);
+                entity.Property(x => x.PasswordResetTokenHash).HasMaxLength(128);
                 entity.HasIndex(x => x.Email).IsUnique();
             });
 

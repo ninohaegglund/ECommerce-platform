@@ -55,6 +55,8 @@ namespace IdentityService.API.Data
                 LastName = "Admin",
                 Email = "admin@local.test",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
+                EmailConfirmed = true,
+                EmailConfirmedAtUtc = DateTime.UtcNow,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
